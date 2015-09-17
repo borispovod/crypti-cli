@@ -459,17 +459,76 @@ program
 program
 	.command('contract')
 	.description('contract operations')
-	.option('-a, -add', "Add new contract")
+	.option('-a, --add', "Add new contract")
+	.option('-d, --delete', "Delete contract")
 	.action(function (options) {
 		var contractsPath = path.join('.', 'modules', 'contracts');
 		fs.exists(contractsPath, function (exist) {
 			if (exist) {
-				fs.readdir(contractsPath, function (err, filenames) {
-					if (err) {
-						return console.log(err);
-					}
+				if (options.add) {
+					fs.readdir(contractsPath, function (err, filenames) {
+						if (err) {
+							return console.log(err);
+						}
 
- 					inquirer.prompt([
+						inquirer.prompt([
+							{
+								type: "input",
+								name: "filename",
+								message: "Contract file name (without .js)"
+							}
+						], function (result) {
+							var name = result.filename,
+								type = filenames.length + 1,
+								filename = result.filename + ".js";
+
+							fs.readFile(path.join(__dirname, "contract-example.js"), "utf8", function (err, exampleContract) {
+								if (err) {
+									return console.log(err);
+								}
+
+								exampleContract = exampleContract.replace(/ExampleContract/g, name);
+								exampleContract = exampleContract.replace("//self.type = null;", "self.type = " + type);
+
+								fs.writeFile(path.join(contractsPath, filename), exampleContract, "utf8", function (err) {
+									if (err) {
+										return console.log(err);
+									} else {
+										console.log("New contract created: " + ("./contracts/" + filename));
+										console.log("Update list of contracts");
+
+										fs.readFile(path.join('.', 'modules.full.json'), 'utf8', function (err, text) {
+											if (err) {
+												return console.log(err);
+											}
+
+											try {
+												var modules = JSON.parse(text);
+											} catch (e) {
+												return console.log(e);
+											}
+
+											var name = "contracts/" + name;
+											var path = path.join(contractsPath, filename);
+
+											modules[name] = path;
+											modules = JSON.stringify(modules, false, 4);
+
+											fs.writeFile(path.join('.', 'modules.full.json'), modules, 'utf8', function (err) {
+												if (err) {
+													return console.log(err);
+												}
+
+												console.log("Done");
+											});
+										});
+									}
+								});
+							});
+						});
+					});
+				} else if (options.delete) {
+					inquirer.prompt([
 						{
 							type: "input",
 							name: "filename",
@@ -480,24 +539,54 @@ program
 							type = filenames.length + 1,
 							filename = result.filename + ".js";
 
-						fs.readFile(path.join(__dirname, "contract-example.js"), "utf8", function (err, exampleContract) {
-							if (err) {
-								return console.log(err);
-							}
-							exampleContract = exampleContract.replace(/ExampleContract/g, name);
-							exampleContract = exampleContract.replace("//self.type = null;", "self.type = " + type);
+						// проверяем что контракт существуем
+						// удаляем
+						// удаляем из modules.full.json
+						var contractPath = path.join(contractsPath, filename);
+						fs.exists(contractPath, function (exists) {
+							if (exists) {
+								fs.unlink(contractPath, function (err) {
+									if (err) {
+										return console.log(err);
+									}
 
-							fs.writeFile(path.join(contractsPath, filename), exampleContract, "utf8", function (err) {
-								if (err) {
-									return console.log(err);
-								} else {
-									console.log("New contract created: " + ("./contracts/" + filename));
-								}
- 							});
+									console.log("Contract removed");
+
+									console.log("Update list of contracts");
+
+									fs.readFile(path.join('.', 'modules.full.json'), 'utf8', function (err, text) {
+										if (err) {
+											return console.log(err);
+										}
+
+										try {
+											var modules = JSON.parse(text);
+										} catch (e) {
+											return console.log(e);
+										}
+
+										var name = "contracts/" + name;
+
+										delete modules[name];
+										modules = JSON.stringify(modules, false, 4);
+
+										fs.writeFile(path.join('.', 'modules.full.json'), modules, 'utf8', function (err) {
+											if (err) {
+												return console.log(err);
+											}
+
+											console.log("Done");
+										});
+									});
+								});
+							} else {
+								return console.log("Contract not found: " + contractPath);
+							}
 						});
 					});
-				});
+				} else {
 
+				}
 			} else {
 				return console.log('./modules/contracts path not found, please, go to dapp folder');
 			}

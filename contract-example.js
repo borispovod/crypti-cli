@@ -52,9 +52,13 @@ ExampleContract.prototype.dbRead = function (row) {
 	return null;
 }
 
+ExampleContract.prototype.normalize = function (asset, cb) {
+	setImmediate(cb);
+}
+
 ExampleContract.prototype.onBind = function (_modules) {
 	modules = _modules;
-	modules.logic.transaction.attachAssetType(1, self);
+	modules.logic.transaction.attachAssetType(self.type, self);
 }
 
 module.exports = ExampleContract;

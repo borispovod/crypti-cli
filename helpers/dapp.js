@@ -1,9 +1,10 @@
 var cryptoLib = require('../lib/crypto.js');
 var ByteBuffer = require('bytebuffer');
 var bignum = require('browserify-bignum');
+var crypto = require('crypto');
 
 function getBytes(block, skipSignature) {
-	var size = 8 + 4 + 4 + 4 + 32 + 32 + 8 + 4 + 4 + 64;
+	var size = 8 + 4 + 4 + 4 + 32 + 32 + 8 + 4 + 4 + 64 + (block.delegates.length * 32);
 
 	var bb = new ByteBuffer(size, true);
 
@@ -41,6 +42,15 @@ function getBytes(block, skipSignature) {
 
 	bb.writeInt(block.count);
 
+	for (var i = 0; i < block.delegates.length; i++) {
+		var delegate = block.delegates[i];
+		var delegateBuffer = new Buffer(delegate, 'hex');
+
+		for (var j = 0; j < delegateBuffer.length; j++) {
+			bb.writeByte(delegateBuffer[j]);
+		}
+	}
+
 	if (!skipSignature && block.signature) {
 		var pb = new Buffer(block.signature, 'hex');
 		for (var i = 0; i < pb.length; i++) {
@@ -63,7 +73,7 @@ module.exports = {
 			pointId: genesisBlock.id,
 			pointHeight: 1,
 			payloadLength: 0,
-			payloadHash: new Buffer(32).toString('hex'),
+			payloadHash: crypto.createHash('sha256').digest().toString('hex'),
 			count: 0,
 			transactions: [],
 			timestamp: 0

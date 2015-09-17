@@ -1,0 +1,16 @@
+{
+    "delegate": "cd03fbddcaaa2703c251656d5ccdd99f5635b1e0653c0636b951a3a3db21dad4",
+    "delegates": [
+        "cd03fbddcaaa2703c251656d5ccdd99f5635b1e0653c0636b951a3a3db21dad4"
+    ],
+    "height": 1,
+    "pointId": "6791290443492956276",
+    "pointHeight": 1,
+    "payloadLength": 0,
+    "payloadHash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "count": 0,
+    "transactions": [],
+    "timestamp": 0,
+    "signature": "504a4825b3d71b638e8c26352f07355abf81d11f5e137a10c37380bd6d2d33c88bd15a3d50977f2ab637913737b60c4b88a857dfe9b30ff492e03003f026030d",
+    "id": "10346525205235295084"
+}

@@ -7,6 +7,8 @@ var gift = require('gift');
 var fs = require('fs');
 var path = require('path');
 var rmdir = require('rmdir');
+var cryptoLib = require('./lib/crypto.js');
+var npm = require('npm');
 var toolkit = "git@github.com:crypti/testdapp.git";
 
 program.version('0.0.1');
@@ -63,7 +65,7 @@ program
 
 							if (!newGenesisBlock) {
 								try {
-									genesisBlock = require('./genesisBlock.js');
+									var genesisBlock = JSON.parse(fs.readFileSync(path.join('.', 'genesisBlock.json'), 'utf8'));
 								} catch (e) {
 									console.log("Can't read genesisBlock.js: ", e.toString());
 									return;
@@ -139,6 +141,7 @@ program
 											category: 0
 										}
 									);
+
 									block = r.block;
 									dapp = r.dapp;
 									delegates = r.delegates;
@@ -160,125 +163,92 @@ program
 									block = r.block;
 									dapp = r.dapp;
 								}
+									inquirer.prompt([
+										{
+											type: "input",
+											name: "publicKeys",
+											message: "Additional public keys of dapp forgers - hex array, use ',' for seperator",
+											default: account.keypair.publicKey,
+											validate: function (value) {
+												var done = this.async();
 
-								inquirer.prompt([
-									{
-										type: "confirm",
-										name: "confirmed",
-										message: "Do you want to add dapp"
-									}
-								], function (result) {
-									if (!result.confirmed) {
-										console.log("Save genesis blocks");
-										var genesisBlockJson = JSON.stringify(block, null, 4);
+												var publicKeys = value.split(',');
 
-										try {
-											fs.writeFileSync(path.join('.', 'genesisBlock.js'), 'module.exports = ', "utf8");
-											fs.appendFileSync(path.join('.', 'genesisBlock.js'), genesisBlockJson, "utf8");
-										} catch (e) {
-											return console.log(err);
-										}
-
-										if (newGenesisBlock) {
-											console.log("Update config");
-
-											var config = require('./config.json');
-											config.forging = config.forging || {};
-											config.forging.secret = delegates.map(function (d) {
-												return d.secret;
-											});
-
-											fs.writeFile(path.join('.', 'config.json'), JSON.stringify(config, null, 2), function (err) {
-												if (err) {
-													console.log(err);
-												} else {
-													console.log("Done");
+												if (publicKeys.length == 0) {
+													done('DApp need minimum 1 public key');
+													return;
 												}
-											});
-										} else {
-											console.log("Done");
-										}
-									} else {
-										inquirer.prompt([
-											{
-												type: "input",
-												name: "publicKeys",
-												message: "Additional public keys of dapp forgers - hex array, use ',' for seperator",
-												default: account.keypair.publicKey,
-												validate: function (value) {
-													var done = this.async();
 
-													var publicKeys = value.split(',');
-
-													if (publicKeys.length == 0) {
-														done('DApp need minimum 1 public key');
-														return;
-													}
-
-													for (var i in publicKeys) {
-														try {
-															var b = new Buffer(publicKeys[i], 'hex');
-															if (b.length != 32) {
-																done('Incorrect public key: ' + publicKeys[i]);
-																return;
-															}
-														} catch (e) {
-															done('Incorrect hex for public key: ' + publicKeys[i]);
+												for (var i in publicKeys) {
+													try {
+														var b = new Buffer(publicKeys[i], 'hex');
+														if (b.length != 32) {
+															done('Incorrect public key: ' + publicKeys[i]);
 															return;
 														}
+													} catch (e) {
+														done('Incorrect hex for public key: ' + publicKeys[i]);
+														return;
 													}
-
-													done(true);
 												}
+
+												done(true);
 											}
-										], function (result) {
-											console.log("Creating DApp genesis block");
+										}
+									], function (result) {
+										console.log("Creating DApp genesis block");
 
-											var dappBlock = dappHelper.new(account, block, result.publicKeys.split(','));
+										var dappBlock = dappHelper.new(account, block, result.publicKeys.split(','));
 
-											console.log("Fetch Crypti DApp Toolkit");
+										console.log("Fetch Crypti DApp Toolkit");
 
-											var dappsPath = path.join('.', 'dapps');
-											fs.exists(dappsPath, function (exists) {
-												if (!exists) {
-													fs.mkdirSync(dappsPath);
+										var dappsPath = path.join('.', 'dapps');
+										fs.exists(dappsPath, function (exists) {
+											if (!exists) {
+												fs.mkdirSync(dappsPath);
+											}
+
+										var dappPath = path.join(dappsPath, dapp.id);
+										gift.clone(toolkit, dappPath, function (err, repo) {
+											if (err) {
+												return console.log(err.toString());
+											}
+
+											rmdir(path.join(dappPath, ".git"), function (err) {
+												if (err) {
+													return console.log(err.toString());
 												}
 
-												var dappPath = path.join(dappsPath, dapp.id);
-												gift.clone(toolkit, dappPath, function (err, repo) {
+												console.log("Connect local repository with your remote repository");
+												gift.init(dappPath, function (err, repo) {
 													if (err) {
 														return console.log(err.toString());
 													}
 
-													rmdir(path.join(dappPath, ".git"), function (err) {
+													repo.remote_add('origin', dapp.asset.dapp.git, function (err, repo) {
 														if (err) {
 															return console.log(err.toString());
 														}
 
-														console.log("Connect local repository with your remote repository");
-														gift.init(dappPath, function (err, repo) {
+														var bcFile = path.join('.', 'blockchain.db');
+
+														var exists = fs.existsSync(bcFile);
+														if (exists) {
+															fs.unlinkSync(bcFile);
+														}
+
+														npm.root = path.join(dappPath, "node_modules");
+														npm.prefix = dappPath;
+
+														npm.commands.install(function (err, data) {
 															if (err) {
-																return console.log(err.toString());
-															}
-
-															repo.remote_add('origin', dapp.asset.dapp.git, function (err, repo) {
-																if (err) {
-																	return console.log(err.toString());
-																}
-
-																var bcFile = path.join('.', 'blockchain.db');
-
-																var exists = fs.existsSync(bcFile);
-																if (exists) {
-																	fs.unlinkSync(bcFile);
-																}
-
+																return console.log(err);
+															} else {
 																console.log("Save genesis blocks");
 																var genesisBlockJson = JSON.stringify(block, null, 4);
 
 																try {
-																	fs.writeFileSync(path.join('.', 'genesisBlock.js'), 'module.exports = ', "utf8");
-																	fs.appendFileSync(path.join('.', 'genesisBlock.js'), genesisBlockJson, "utf8");
+																	fs.writeFileSync(path.join('.', 'genesisBlock.json'), genesisBlockJson, "utf8");
 																} catch (e) {
 																	return console.log(err);
 																}
@@ -291,14 +261,39 @@ program
 																	return console.log(err);
 																}
 
-																if (newGenesisBlock) {
-																	console.log("Update config");
+																console.log("Update config");
 
-																	var config = require('./config.json');
+																try {
+																	var config = JSON.parse(fs.readFileSync(path.join('.', 'config.json'), 'utf8'));
+																} catch (e) {
+																	return console.log(e);
+																}
+
+																if (newGenesisBlock) {
 																	config.forging = config.forging || {};
 																	config.forging.secret = delegates.map(function (d) {
 																		return d.secret;
 																	});
+																}
+
+																inquirer.prompt([
+																	{
+																		type: "confirm",
+																		name: "confirmed",
+																		message: "Add dapp to autolaunch"
+																	}
+																], function (result) {
+																	if (result.confirmed) {
+																		config.dapp = config.dapp || {};
+																		config.dapp.autoexec = config.dapp.autoexec || [];
+																		config.dapp.autoexec.push({
+																			params: [
+																				account.secret,
+																				"modules.full.json"
+																			],
+																			dappid: dapp.id
+																		})
+																	}
 
 																	fs.writeFile(path.join('.', 'config.json'), JSON.stringify(config, null, 2), function (err) {
 																		if (err) {
@@ -307,17 +302,15 @@ program
 																			console.log("Done");
 																		}
 																	});
-																} else {
-																	console.log("Done");
-																}
-															});
+																});
+															}
 														});
 													});
 												});
 											});
-
 										});
-									}
+									});
+
 								});
 							});
 						});
@@ -468,10 +461,15 @@ program
 	.description('contract operations')
 	.option('-a, -add', "Add new contract")
 	.action(function (options) {
-		fs.exists('./contracts', function (exist) {
+		var contractsPath = path.join('.', 'modules', 'contracts');
+		fs.exists(contractsPath, function (exist) {
 			if (exist) {
-				fs.readdir('./contracts', function (filenames) {
-					inquirer.prompt([
+				fs.readdir(contractsPath, function (err, filenames) {
+					if (err) {
+						return console.log(err);
+					}
+
+ 					inquirer.prompt([
 						{
 							type: "input",
 							name: "filename",
@@ -482,11 +480,14 @@ program
 							type = filenames.length + 1,
 							filename = result.filename + ".js";
 
-						fs.readFile("./contract-example.js", "utf8", function (exampleContract) {
-							exampleContract = exampleContract.replace("ExampleContract", name);
+						fs.readFile(path.join(__dirname, "contract-example.js"), "utf8", function (err, exampleContract) {
+							if (err) {
+								return console.log(err);
+							}
+							exampleContract = exampleContract.replace(/ExampleContract/g, name);
 							exampleContract = exampleContract.replace("//self.type = null;", "self.type = " + type);
 
-							js.writeFile("./contracts/" + filename, exampleContract, "utf8", function (err) {
+							fs.writeFile(path.join(contractsPath, filename), exampleContract, "utf8", function (err) {
 								if (err) {
 									return console.log(err);
 								} else {
@@ -498,7 +499,7 @@ program
 				});
 
 			} else {
-				return console.log('./contracts path not found, please, go to dapp folder');
+				return console.log('./modules/contracts path not found, please, go to dapp folder');
 			}
 		});
 	});
@@ -507,6 +508,7 @@ program
 	.command('crypto')
 	.description("crypto operations")
 	.option('-p, --pubkey', "Generate public key by secret")
+	.option('-g, --generate', "Generate random accounts")
 	.action(function (options) {
 		if (options.pubkey) {
 			inquirer.prompt([
@@ -534,13 +536,40 @@ program
 				var account = accountHelper.account(result.secret);
 				console.log("Public key: " + account.keypair.publicKey);
 			});
+		} else if (options.generate) {
+			inquirer.prompt([
+				{
+					type: "input",
+					name: "amount",
+					message: "How many accounts generate",
+					validate: function (value) {
+						var num = parseInt(value);
+						return !isNaN(num);
+					}
+				}
+			], function (result) {
+				var n = parseInt(result.amount),
+					accounts = [];
+
+				for (var i = 0; i < n; i++) {
+					var a = accountHelper.account(cryptoLib.randomString(32));
+					accounts.push({
+						address: a.address,
+						secret: a.secret,
+						publicKey: a.keypair.publicKey
+					});
+				}
+
+				console.log(accounts);
+				console.log("Done");
+			});
 		} else {
 			console.log("'node crypto -h' to get help");
 		}
 	});
 
 
-if (!process.argv.slice(1).length) {
+if (!process.argv.slice(2).length) {
 	program.outputHelp();
 }
 

@@ -80,9 +80,6 @@ module.exports = {
 		bytes = transactionsLib.getTransactionBytes(balanceTransaction);
 		balanceTransaction.id = cryptoLib.getId(bytes);
 
-		payloadLength += bytes.length;
-		payloadHash.update(bytes);
-
 		transactions.push(balanceTransaction);
 
 		// make delegates
@@ -100,8 +97,8 @@ module.exports = {
 				fee: 0,
 				timestamp: 0,
 				recipientId: null,
-				senderId: sender.address,
-				senderPublicKey: sender.keypair.publicKey,
+				senderId: delegate.address,
+				senderPublicKey: delegate.keypair.publicKey,
 				asset: {
 					delegate: {
 						username: username
@@ -114,15 +111,12 @@ module.exports = {
 			bytes = transactionsLib.getTransactionBytes(transaction);
 			transaction.id = cryptoLib.getId(bytes);
 
-			payloadLength += bytes.length;
-			payloadHash.update(bytes);
-
 			transactions.push(transaction);
 		}
 
 		// make votes
 		var votes = delegates.map(function (delegate) {
-			return "+" + delegate.publicKey;
+			return "+" + delegate.keypair.publicKey;
 		});
 
 		var voteTransaction = {
@@ -142,9 +136,6 @@ module.exports = {
 		voteTransaction.signature = cryptoLib.sign(genesisAccount.keypair, bytes);
 		bytes = transactionsLib.getTransactionBytes(voteTransaction);
 		voteTransaction.id = cryptoLib.getId(bytes);
-
-		payloadLength += bytes.length;
-		payloadHash.update(bytes);
 
 		transactions.push(voteTransaction);
 
@@ -167,10 +158,23 @@ module.exports = {
 		bytes = transactionsLib.getTransactionBytes(dappTransaction);
 		dappTransaction.id = cryptoLib.getId(bytes);
 
-		payloadLength += bytes.length;
-		payloadHash.update(bytes);
-
 		transactions.push(dappTransaction);
+
+
+		transactions = transactions.sort(function compare(a, b) {
+			if (a.type == 1) return 1;
+			if (a.type < b.type) return -1;
+			if (a.type > b.type) return 1;
+			if (a.amount < b.amount) return -1;
+			if (a.amount > b.amount) return 1;
+			return 0;
+		});
+
+		transactions.forEach(function (tx) {
+			bytes = transactionsLib.getTransactionBytes(tx);
+			payloadLength += bytes.length;
+			payloadHash.update(bytes);
+		});
 
 		payloadHash = payloadHash.digest();
 
@@ -202,7 +206,7 @@ module.exports = {
 
 	from: function (genesisBlock, genesisAccount, dapp) {
 		for (var i  in genesisBlock.transactions) {
-			var tx = genesisAccount.transactions[i];
+			var tx = genesisBlock.transactions[i];
 
 			if (tx.type == 9) {
 				if (tx.asset.dapp.name == dapp.name) {
@@ -247,6 +251,7 @@ module.exports = {
 		genesisBlock.blockSignature = cryptoLib.sign(sender.keypair, bytes);
 		bytes = getBytes(genesisBlock);
 		genesisBlock.id = cryptoLib.getId(bytes);
+
 
 		return {
 			block: genesisBlock,

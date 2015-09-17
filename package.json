@@ -1,5 +1,6 @@
 {
   "name": "crypti-cli",
+  "preferGlobal": true,
   "version": "1.0.0",
   "description": "Crypti Dapps Command Line Interface",
   "main": "index.js",
@@ -11,6 +12,9 @@
     "dapps",
     "cli"
   ],
+  "bin": {
+    "crypti-cli": "./bin/crypti-cli"
+  },
   "author": "Boris Povod <boris@crypti.me>",
   "license": "MIT",
   "dependencies": {

@@ -232,7 +232,7 @@ module.exports = {
 			}
 		};
 
-		bytes = transactionsLib.getTransactionBytes(dappTransaction);
+		var bytes = transactionsLib.getTransactionBytes(dappTransaction);
 		dappTransaction.signature = cryptoLib.sign(genesisAccount.keypair, bytes);
 		bytes = transactionsLib.getTransactionBytes(dappTransaction);
 		dappTransaction.id = cryptoLib.getId(bytes);

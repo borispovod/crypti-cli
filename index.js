@@ -18,6 +18,8 @@ program
 	.description("Manage your dapps")
 	.option("-a, --add", "Add dapp")
 	.option("-c, --change", "Change dapp genesis block")
+	.option("-d, --deposit", "Deposit dapp")
+	.option("-w, --withdrawal", "Withdrawal funds from dapp")
 	.action(function (options) {
 		if (options.add) {
 			inquirer.prompt([
@@ -237,73 +239,85 @@ program
 															fs.unlinkSync(bcFile);
 														}
 
-														npm.root = path.join(dappPath, "node_modules");
-														npm.prefix = dappPath;
+														// load npm config
+														var packageJson = path.join(dappPath, "package.json");
+														var config = null;
 
-														npm.commands.install(function (err, data) {
-															if (err) {
-																return console.log(err);
-															} else {
-																console.log("Save genesis blocks");
-																var genesisBlockJson = JSON.stringify(block, null, 4);
+														try {
+															config = JSON.parse(fs.readFileSync(packageJson));
+														} catch (e) {
+															return setImmediate(cb, "Incorrect package.json file for " + dApp.transactionId + " DApp");
+														}
 
-																try {
-																	fs.writeFileSync(path.join('.', 'genesisBlock.json'), genesisBlockJson, "utf8");
-																} catch (e) {
+														npm.load(config, function (err) {
+															npm.root = path.join(dappPath, "node_modules");
+															npm.prefix = dappPath;
+
+															npm.commands.install(function (err, data) {
+																if (err) {
 																	return console.log(err);
-																}
+																} else {
+																	console.log("Save genesis blocks");
+																	var genesisBlockJson = JSON.stringify(block, null, 4);
 
-																var dappGenesisBlockJson = JSON.stringify(dappBlock, null, 4);
-
-																try {
-																	fs.writeFileSync(path.join(dappPath, 'genesis.json'), dappGenesisBlockJson, "utf8");
-																} catch (e) {
-																	return console.log(err);
-																}
-
-																console.log("Update config");
-
-																try {
-																	var config = JSON.parse(fs.readFileSync(path.join('.', 'config.json'), 'utf8'));
-																} catch (e) {
-																	return console.log(e);
-																}
-
-																if (newGenesisBlock) {
-																	config.forging = config.forging || {};
-																	config.forging.secret = delegates.map(function (d) {
-																		return d.secret;
-																	});
-																}
-
-																inquirer.prompt([
-																	{
-																		type: "confirm",
-																		name: "confirmed",
-																		message: "Add dapp to autolaunch"
-																	}
-																], function (result) {
-																	if (result.confirmed) {
-																		config.dapp = config.dapp || {};
-																		config.dapp.autoexec = config.dapp.autoexec || [];
-																		config.dapp.autoexec.push({
-																			params: [
-																				account.secret,
-																				"modules.full.json"
-																			],
-																			dappid: dapp.id
-																		})
+																	try {
+																		fs.writeFileSync(path.join('.', 'genesisBlock.json'), genesisBlockJson, "utf8");
+																	} catch (e) {
+																		return console.log(err);
 																	}
 
-																	fs.writeFile(path.join('.', 'config.json'), JSON.stringify(config, null, 2), function (err) {
-																		if (err) {
-																			console.log(err);
-																		} else {
-																			console.log("Done");
+																	var dappGenesisBlockJson = JSON.stringify(dappBlock, null, 4);
+
+																	try {
+																		fs.writeFileSync(path.join(dappPath, 'genesis.json'), dappGenesisBlockJson, "utf8");
+																	} catch (e) {
+																		return console.log(err);
+																	}
+
+																	console.log("Update config");
+
+																	try {
+																		var config = JSON.parse(fs.readFileSync(path.join('.', 'config.json'), 'utf8'));
+																	} catch (e) {
+																		return console.log(e);
+																	}
+
+																	if (newGenesisBlock) {
+																		config.forging = config.forging || {};
+																		config.forging.secret = delegates.map(function (d) {
+																			return d.secret;
+																		});
+																	}
+
+																	inquirer.prompt([
+																		{
+																			type: "confirm",
+																			name: "confirmed",
+																			message: "Add dapp to autolaunch"
 																		}
+																	], function (result) {
+																		if (result.confirmed) {
+																			config.dapp = config.dapp || {};
+																			config.dapp.autoexec = config.dapp.autoexec || [];
+																			config.dapp.autoexec.push({
+																				params: [
+																					account.secret,
+																					"modules.full.json"
+																				],
+																				dappid: dapp.id
+																			})
+																		}
+
+																		fs.writeFile(path.join('.', 'config.json'), JSON.stringify(config, null, 2), function (err) {
+																			if (err) {
+																				console.log(err);
+																			} else {
+																				console.log("Done (DApp id is " + dapp.id + ")");
+																			}
+																		});
 																	});
-																});
-															}
+																}
+															});
 														});
 													});
 												});
@@ -451,6 +465,128 @@ program
 
 				}
 			});
+		} else if (options.deposit) {
+			inquirer.prompt([
+				{
+					type: "password",
+					name: "secret",
+					message: "Your secret",
+					validate: function (value) {
+						return value.length > 0 && value.length < 100;
+					},
+					required: true
+				},
+				{
+					type: "input",
+					name: "amount",
+					message: "Amount",
+					validate: function (value) {
+						return !isNaN(parseInt(value));
+					},
+					required: true
+				},
+				{
+					type: "input",
+					name: "dappId",
+					message: "DApp Id",
+					validate: function (value) {
+						var isAddress = /^[0-9]$/g;
+						return isAddress.test(value);
+					},
+					required: true
+				},
+				{
+					type: "input",
+					name: "secondSecret",
+					message: "Second secret, if you have it",
+					validate: function (value) {
+						return value.length < 100;
+					},
+					required: false
+				}
+			], function (result) {
+				// body
+				var body = {
+					secret: result.secret,
+					dappId: result.dappId,
+					amount: result.amount
+				};
+
+				if (result.secondSecret && result.secondSecret.length > 0) {
+					body.secondSecret = result.secondSecret;
+				}
+
+				request({
+					url: "http://localhost:7040/api/dapps/" + result.dappId + "/transactions",
+					method: "post",
+					json: true,
+					body: body
+				}, function (err, resp, body) {
+					if (err) {
+						return console.log(err.toString());
+					}
+
+					if (body.success) {
+						console.log(body.transactionId);
+					} else {
+						return console.log(body.error);
+					}
+				});
+			});
+		} else if (options.withdrawal) {
+			inquirer.prompt([
+				{
+					type: "password",
+					name: "secret",
+					message: "Your secret",
+					validate: function (value) {
+						return value.length > 0 && value.length < 100;
+					},
+					required: true
+				},
+				{
+					type: "input",
+					name: "amount",
+					message: "Amount",
+					validate: function (value) {
+						return !isNaN(parseInt(value));
+					},
+					required: true
+				},
+				{
+					type: "input",
+					name: "dappId",
+					message: "DApp Id",
+					validate: function (value) {
+						var isAddress = /^[0-9]$/g;
+						return isAddress.test(value);
+					},
+					required: true
+				}], function (result) {
+
+				var body = {
+					secret: result.secret,
+					amount: result.amount
+				};
+
+
+				request({
+					url: "http://localhost:7040/api/dapps/" + result.dappId + "/api/withdrawal",
+					method: "post",
+					json: true,
+					body: body
+				}, function (err, resp, body) {
+					if (err) {
+						return console.log(err.toString());
+					}
+
+					if (body.success) {
+						console.log(body.response.transactionId);
+					} else {
+						return console.log(body.error);
+					}
+				});
+			});
 		} else {
 			console.log("'node dapps -h' to get help");
 		}
@@ -509,9 +645,9 @@ program
 											}
 
 											var name = "contracts/" + name;
-											var path = path.join(contractsPath, filename);
+											var dappPathConfig = path.join(contractsPath, filename);
 
-											modules[name] = path;
+											modules[name] = dappPathConfig;
 											modules = JSON.stringify(modules, false, 4);
 
 											fs.writeFile(path.join('.', 'modules.full.json'), modules, 'utf8', function (err) {

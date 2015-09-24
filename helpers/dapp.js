@@ -67,7 +67,9 @@ module.exports = {
 			senderId: genesisAccount.address,
 			senderPublicKey: genesisAccount.keypair.publicKey,
 			asset: {
-				list: publicKeys
+				delegates: {
+					list: publicKeys
+				}
 			}
 		}
 		var block = {

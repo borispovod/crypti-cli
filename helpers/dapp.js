@@ -85,6 +85,7 @@ module.exports = {
 
 		bytes = dappTransactionsLib.getTransactionBytes(delegatesTransaction);
 		delegatesTransaction.id = cryptoLib.getId(bytes);
+		delegatesTransaction.signature = cryptoLib.sign(genesisAccount.keypair, bytes);
 
 		block.payloadLength = bytes.length;
 		block.payloadHash = crypto.createHash('sha256').update(bytes).digest().toString('hex');

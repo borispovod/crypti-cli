@@ -58,6 +58,9 @@ function getBytes(block, skipSignature) {
 
 module.exports = {
 	new: function (genesisAccount, genesisBlock, publicKeys) {
+		var delegates = publicKeys.map(function (key) {
+			return "+" + key;
+		})
 		var delegatesTransaction = {
 			type: 4,
 			amount: 0,
@@ -68,7 +71,7 @@ module.exports = {
 			senderPublicKey: genesisAccount.keypair.publicKey,
 			asset: {
 				delegates: {
-					list: publicKeys
+					list: delegates
 				}
 			}
 		}

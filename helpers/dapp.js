@@ -5,7 +5,7 @@ var crypto = require('crypto');
 var dappTransactionsLib = require('../lib/dapptransactions.js');
 
 function getBytes(block, skipSignature) {
-	var size = 8 + 4 + 4 + 4 + 32 + 32 + 8 + 4 + 4 + 64 + (block.delegates.length * 32);
+	var size = 8 + 4 + 4 + 4 + 32 + 32 + 8 + 4 + 4 + 64;
 
 	var bb = new ByteBuffer(size, true);
 

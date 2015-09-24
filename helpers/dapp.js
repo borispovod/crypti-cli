@@ -87,7 +87,7 @@ module.exports = {
 		delegatesTransaction.id = cryptoLib.getId(bytes);
 
 		block.payloadLength = bytes.length;
-		block.payloadHash = crypto.createHash('sha256').update(bytes).digest().toString('utf8');
+		block.payloadHash = crypto.createHash('sha256').update(bytes).digest().toString('hex');
 
 		var bytes = getBytes(block);
 		block.signature = cryptoLib.sign(genesisAccount.keypair, bytes);

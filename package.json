@@ -2,7 +2,7 @@
   "name": "crypti-cli",
   "preferGlobal": true,
   "version": "1.0.1",
-  "description": "Crypti Dapps Command Line Interface",
+  "description": "Crypti DApps Command Line Interface",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -27,5 +27,9 @@
     "js-nacl": "^0.6.0",
     "request": "^2.62.0",
     "rmdir": "^1.1.0"
-  }
+  },
+  "bugs": {
+    "url": "https://github.com/crypti/crypti-cli/issues"
+  },
+  "homepage": "https://github.com/crypti/crypti-cli"
 }

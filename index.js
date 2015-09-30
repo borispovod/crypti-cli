@@ -9,7 +9,10 @@ var path = require('path');
 var rmdir = require('rmdir');
 var cryptoLib = require('./lib/crypto.js');
 var npm = require('npm');
+var request = require('request');
+
 var toolkit = "git@github.com:crypti/DAppToolkit.git";
+
 
 program.version('0.0.1');
 
@@ -489,10 +492,6 @@ program
 					type: "input",
 					name: "dappId",
 					message: "DApp Id",
-					validate: function (value) {
-						var isAddress = /^[0-9]$/g;
-						return isAddress.test(value);
-					},
 					required: true
 				},
 				{
@@ -509,7 +508,7 @@ program
 				var body = {
 					secret: result.secret,
 					dappId: result.dappId,
-					amount: result.amount
+					amount: parseInt(result.amount)
 				};
 
 				if (result.secondSecret && result.secondSecret.length > 0) {
@@ -517,17 +516,19 @@ program
 				}
 
 				request({
-					url: "http://localhost:7040/api/dapps/" + result.dappId + "/transactions",
-					method: "post",
+					url: "http://localhost:7040/api/dapps/transaction",
+					method: "put",
 					json: true,
 					body: body
 				}, function (err, resp, body) {
+					console.log(err, body);
 					if (err) {
 						return console.log(err.toString());
 					}
 
 					if (body.success) {
 						console.log(body.transactionId);
+						return;
 					} else {
 						return console.log(body.error);
 					}

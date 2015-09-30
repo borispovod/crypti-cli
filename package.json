@@ -1,7 +1,7 @@
 {
   "name": "crypti-cli",
   "preferGlobal": true,
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "Crypti DApps Command Line Interface",
   "main": "index.js",
   "scripts": {

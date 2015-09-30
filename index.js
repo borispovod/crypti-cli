@@ -645,7 +645,7 @@ program
 											}
 
 											var contractName = "contracts/" + name;
-											var dappPathConfig = path.join(contractsPath, filename);
+											var dappPathConfig = "./" + path.join(contractsPath, filename);
 
 											modules[contractName] = dappPathConfig;
 											modules = JSON.stringify(modules, false, 4);

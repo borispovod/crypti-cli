@@ -9,7 +9,7 @@ var path = require('path');
 var rmdir = require('rmdir');
 var cryptoLib = require('./lib/crypto.js');
 var npm = require('npm');
-var toolkit = "git@github.com:crypti/testdapp.git";
+var toolkit = "git@github.com:crypti/DAppToolkit.git";
 
 program.version('0.0.1');
 

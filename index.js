@@ -29,7 +29,7 @@ program
 				{
 					type: "confirm",
 					name: "confirmed",
-					message: "This operation need to remove old blockchain.db file and create new one, are you sure?",
+					message: "This operation needs to remove the old blockchain.db file and create a new one, are you sure?",
 					default: false
 				}
 			], function (result) {
@@ -38,7 +38,7 @@ program
 						{
 							type: "password",
 							name: "secret",
-							message: "Put secret of your testnet account",
+							message: "Enter secret of your testnet account",
 							validate: function (value) {
 								var done = this.async();
 
@@ -62,7 +62,7 @@ program
 							{
 								type: "confirm",
 								name: "confirmed",
-								message: "Update current genesis block? (or make new one)"
+								message: "Update current genesis block? (or create a new one)"
 							}
 						], function (result) {
 							var genesisBlock = null;
@@ -131,7 +131,7 @@ program
 									}
 								}
 							], function (result) {
-								console.log("Generating unique genesis block special for you...");
+								console.log("Generating unique genesis block especially for you...");
 
 								// create dapp and save to genesis block
 								var block, dapp, delegates;
@@ -339,7 +339,7 @@ program
 				{
 					type: "confirm",
 					name: "confirmed",
-					message: "This operation need to remove old blockchain.db file and create new one, are you sure?",
+					message: "This operation needs to remove the old blockchain.db file and create a new one, are you sure?",
 					default: false
 				}
 			], function (result) {
@@ -348,7 +348,7 @@ program
 						{
 							type: "password",
 							name: "secret",
-							message: "Put secret of your testnet account",
+							message: "Enter secret of your testnet account",
 							validate: function (value) {
 								var done = this.async();
 
@@ -741,7 +741,7 @@ program
 				{
 					type: "password",
 					name: "secret",
-					message: "Put secret of your testnet account",
+					message: "Enter secret of your testnet account",
 					validate: function (value) {
 						var done = this.async();
 

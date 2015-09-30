@@ -20,8 +20,6 @@ Or if you are not root:
 sudo npm install -g crypti-cli
 ```
 
-***
-
 ## Help
 
 Run to get help:
@@ -29,8 +27,6 @@ Run to get help:
 ```sh
 crypti-cli -h
 ```
-
-***
 
 ## DApps
 
@@ -40,23 +36,17 @@ crypti-cli -h
 crypti-cli dapps -a
 ```
 
-***
-
 ### Deposit
 
 ```sh
 crypti-cli dapps -d
 ```
 
-***
-
 ### Withdrawal
 
 ```sh
 crypti-cli dapps -w
 ```
-
-***
 
 ## Contracts
 
@@ -71,8 +61,6 @@ crypti-cli contract -a
 ```sh
 crypti-cli contract -d
 ```
-
-***
 
 ## Crypto
 

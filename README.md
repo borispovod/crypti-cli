@@ -76,3 +76,10 @@ crypti-cli crypto -p
 crypti-cli crypto -g
 ```
 
+## License 
+
+MIT
+
+## Help?
+
+Joins our [slack](http://slack.crypti.me).

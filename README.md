@@ -1,10 +1,10 @@
 # crypti-cli
 
-Crypti Command Line Tool. It's developing version, will not work before 0.5.0 of Crypti released.
+A command line interface for bootstrapping and managing Crypti DApps.
 
-## Required
+Requires:
 
-    * Crypti 0.5.0
+  * Crypti 0.5.0
 
 ## Installation: 
 
@@ -20,6 +20,8 @@ Or if you are not root:
 sudo npm install -g crypti-cli
 ```
 
+***
+
 ## Help
 
 Run to get help:
@@ -27,6 +29,8 @@ Run to get help:
 ```sh
 crypti-cli -h
 ```
+
+***
 
 ## DApps
 
@@ -36,17 +40,23 @@ crypti-cli -h
 crypti-cli dapps -a
 ```
 
+***
+
 ### Deposit
 
 ```sh
 crypti-cli dapps -d
 ```
 
+***
+
 ### Withdrawal
 
 ```sh
 crypti-cli dapps -w
 ```
+
+***
 
 ## Contracts
 
@@ -61,6 +71,8 @@ crypti-cli contract -a
 ```sh
 crypti-cli contract -d
 ```
+
+***
 
 ## Crypto
 
@@ -80,6 +92,6 @@ crypti-cli crypto -g
 
 MIT
 
-## Help?
+## Help
 
-Joins our [slack](http://slack.crypti.me).
+For further help using **crypti-cli**, please join our [slack](http://slack.crypti.me).

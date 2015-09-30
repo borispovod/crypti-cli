@@ -644,10 +644,10 @@ program
 												return console.log(e);
 											}
 
-											var name = "contracts/" + name;
+											var contractName = "contracts/" + name;
 											var dappPathConfig = path.join(contractsPath, filename);
 
-											modules[name] = dappPathConfig;
+											modules[contractName] = dappPathConfig;
 											modules = JSON.stringify(modules, false, 4);
 
 											fs.writeFile(path.join('.', 'modules.full.json'), modules, 'utf8', function (err) {

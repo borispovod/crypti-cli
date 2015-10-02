@@ -14,7 +14,7 @@ var request = require('request');
 var toolkit = "git@github.com:crypti/DAppToolkit.git";
 
 
-program.version('0.0.1');
+program.version('1.0.9');
 
 program
 	.command("dapps")

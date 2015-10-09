@@ -4,11 +4,11 @@ A command line interface for bootstrapping and managing Crypti DApps.
 
 Requires:
 
-  * Crypti 0.5.0
+* Crypti 0.5.0
 
-## Installation: 
+## Installation:
 
-To install run: 
+To install run:
 
 ```sh
 npm install -g crypti-cli
@@ -42,7 +42,7 @@ crypti-cli dapps -a
 crypti-cli dapps -d
 ```
 
-### Withdrawal
+### Withdraw
 
 ```sh
 crypti-cli dapps -w
@@ -82,4 +82,4 @@ MIT
 
 ## Help
 
-For further help using **crypti-cli**, please join our [slack](http://slack.crypti.me).
+For further help using **crypti-cli**, please join our [slack](http://slack.crypti.me) group.

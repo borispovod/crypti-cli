@@ -18,11 +18,11 @@ program.version('1.0.9');
 
 program
 	.command("dapps")
-	.description("Manage your dapps")
-	.option("-a, --add", "Add dapp")
-	.option("-c, --change", "Change dapp genesis block")
-	.option("-d, --deposit", "Deposit dapp")
-	.option("-w, --withdrawal", "Withdrawal funds from dapp")
+	.description("manage your dapps")
+	.option("-a, --add", "add new dapp")
+	.option("-c, --change", "change dapp genesis block")
+	.option("-d, --deposit", "deposit funds to dapp")
+	.option("-w, --withdrawal", "withdraw funds from dapp")
 	.action(function (options) {
 		if (options.add) {
 			inquirer.prompt([
@@ -596,8 +596,8 @@ program
 program
 	.command('contract')
 	.description('contract operations')
-	.option('-a, --add', "Add new contract")
-	.option('-d, --delete', "Delete contract")
+	.option('-a, --add', "add new contract")
+	.option('-d, --delete', "delete contract")
 	.action(function (options) {
 		var contractsPath = path.join('.', 'modules', 'contracts');
 		fs.exists(contractsPath, function (exist) {
@@ -733,8 +733,8 @@ program
 program
 	.command('crypto')
 	.description("crypto operations")
-	.option('-p, --pubkey', "Generate public key by secret")
-	.option('-g, --generate', "Generate random accounts")
+	.option('-p, --pubkey', "generate public key from secret")
+	.option('-g, --generate', "generate random accounts")
 	.action(function (options) {
 		if (options.pubkey) {
 			inquirer.prompt([

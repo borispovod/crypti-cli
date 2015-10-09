@@ -43,12 +43,12 @@ program
 								var done = this.async();
 
 								if (value.length == 0) {
-									done("Secret must contain minimum 1 character");
+									done("Secret is too short, minimum is 1 character");
 									return;
 								}
 
 								if (value.length > 100) {
-									done("Secret max length is 100 characters");
+									done("Secret is too long, maximum is 100 characters");
 									return;
 								}
 
@@ -87,12 +87,12 @@ program
 										var done = this.async();
 
 										if (value.length == 0) {
-											done("DApp name must minimum contain one character");
+											done("DApp name is too short, minimum is 1 character");
 											return;
 										}
 
 										if (value.length > 32) {
-											done("DApp name max length is 32 characters");
+											done("DApp name is too long, maximum is 32 characters");
 											return;
 										}
 
@@ -107,7 +107,7 @@ program
 										var done = this.async();
 
 										if (value.length > 160) {
-											done("DApp description max length is 160 characters");
+											done("DApp description is too long, maximum is 160 characters");
 											return;
 										}
 
@@ -180,7 +180,7 @@ program
 												var publicKeys = value.split(',');
 
 												if (publicKeys.length == 0) {
-													done('DApp need minimum 1 public key');
+													done('DApp requires at least 1 public key');
 													return;
 												}
 
@@ -353,12 +353,12 @@ program
 								var done = this.async();
 
 								if (value.length == 0) {
-									done("Secret must contain minimum 1 character");
+									done("Secret is too short, minimum is 1 character");
 									return;
 								}
 
 								if (value.length > 100) {
-									done("Secret max length is 100 characters");
+									done("Secret is too long, maximum is 100 characters");
 									return;
 								}
 
@@ -379,7 +379,7 @@ program
 
 									var isId = /^[0-9]$/g;
 									if (!isId.test(value)) {
-										done("This is not dapp id");
+										done("Invalid DApp id");
 										return;
 									}
 
@@ -417,7 +417,7 @@ program
 											var publicKeys = value.split(',');
 
 											if (publicKeys.length == 0) {
-												done('DApp need minimum 1 public key');
+												done('DApp requires at least 1 public key');
 												return;
 											}
 
@@ -746,12 +746,12 @@ program
 						var done = this.async();
 
 						if (value.length == 0) {
-							done("Secret must contain minimum 1 character");
+							done("Secret is too short, minimum is 1 character");
 							return;
 						}
 
 						if (value.length > 100) {
-							done("Secret max length is 100 characters");
+							done("Secret is too long, maximum is 100 characters");
 							return;
 						}
 

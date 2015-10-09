@@ -18,18 +18,18 @@ program.version('1.0.9');
 
 program
 	.command("dapps")
-	.description("Manage your dapps")
-	.option("-a, --add", "Add dapp")
-	.option("-c, --change", "Change dapp genesis block")
-	.option("-d, --deposit", "Deposit dapp")
-	.option("-w, --withdrawal", "Withdrawal funds from dapp")
+	.description("manage your dapps")
+	.option("-a, --add", "add new dapp")
+	.option("-c, --change", "change dapp genesis block")
+	.option("-d, --deposit", "deposit funds to dapp")
+	.option("-w, --withdrawal", "withdraw funds from dapp")
 	.action(function (options) {
 		if (options.add) {
 			inquirer.prompt([
 				{
 					type: "confirm",
 					name: "confirmed",
-					message: "This operation needs to remove the old blockchain.db file and create a new one, are you sure?",
+					message: "Existing blockchain.db file will be replaced, are you sure?",
 					default: false
 				}
 			], function (result) {
@@ -43,12 +43,12 @@ program
 								var done = this.async();
 
 								if (value.length == 0) {
-									done("Secret must contain minimum 1 character");
+									done("Secret is too short, minimum is 1 character");
 									return;
 								}
 
 								if (value.length > 100) {
-									done("Secret max length is 100 characters");
+									done("Secret is too long, maximum is 100 characters");
 									return;
 								}
 
@@ -62,7 +62,7 @@ program
 							{
 								type: "confirm",
 								name: "confirmed",
-								message: "Update current genesis block? (or create a new one)"
+								message: "Update existing genesis block? (or create a new one)"
 							}
 						], function (result) {
 							var genesisBlock = null;
@@ -81,18 +81,18 @@ program
 								{
 									type: "input",
 									name: "name",
-									message: "Your DApp name",
+									message: "Enter DApp name",
 									required: true,
 									validate: function (value) {
 										var done = this.async();
 
 										if (value.length == 0) {
-											done("DApp name must minimum contain one character");
+											done("DApp name is too short, minimum is 1 character");
 											return;
 										}
 
 										if (value.length > 32) {
-											done("DApp name max length is 32 characters");
+											done("DApp name is too long, maximum is 32 characters");
 											return;
 										}
 
@@ -102,12 +102,12 @@ program
 								{
 									type: "input",
 									name: "description",
-									message: "Description",
+									message: "Enter DApp description",
 									validate: function (value) {
 										var done = this.async();
 
 										if (value.length > 160) {
-											done("DApp description max length is 160 characters");
+											done("DApp description is too long, maximum is 160 characters");
 											return;
 										}
 
@@ -131,7 +131,7 @@ program
 									}
 								}
 							], function (result) {
-								console.log("Generating unique genesis block especially for you...");
+								console.log("Generating unique genesis block...");
 
 								// create dapp and save to genesis block
 								var block, dapp, delegates;
@@ -172,7 +172,7 @@ program
 										{
 											type: "input",
 											name: "publicKeys",
-											message: "Additional public keys of dapp forgers - hex array, use ',' for seperator",
+											message: "Enter public keys of dapp forgers - hex array, use ',' for separator",
 											default: account.keypair.publicKey,
 											validate: function (value) {
 												var done = this.async();
@@ -180,7 +180,7 @@ program
 												var publicKeys = value.split(',');
 
 												if (publicKeys.length == 0) {
-													done('DApp need minimum 1 public key');
+													done('DApp requires at least 1 public key');
 													return;
 												}
 
@@ -205,7 +205,7 @@ program
 
 										var dappBlock = dappHelper.new(account, block, result.publicKeys.split(','));
 
-										console.log("Fetch Crypti DApp Toolkit");
+										console.log("Fetching Crypti DApp Toolkit");
 
 										var dappsPath = path.join('.', 'dapps');
 										fs.exists(dappsPath, function (exists) {
@@ -224,7 +224,7 @@ program
 													return console.log(err.toString());
 												}
 
-												console.log("Connect local repository with your remote repository");
+												console.log("Connecting local repository with remote repository");
 												gift.init(dappPath, function (err, repo) {
 													if (err) {
 														return console.log(err.toString());
@@ -260,7 +260,7 @@ program
 																if (err) {
 																	return console.log(err);
 																} else {
-																	console.log("Save genesis blocks");
+																	console.log("Saving genesis block");
 																	var genesisBlockJson = JSON.stringify(block, null, 4);
 
 																	try {
@@ -277,7 +277,7 @@ program
 																		return console.log(err);
 																	}
 
-																	console.log("Update config");
+																	console.log("Updating config");
 
 																	try {
 																		var config = JSON.parse(fs.readFileSync(path.join('.', 'config.json'), 'utf8'));
@@ -339,7 +339,7 @@ program
 				{
 					type: "confirm",
 					name: "confirmed",
-					message: "This operation needs to remove the old blockchain.db file and create a new one, are you sure?",
+					message: "Existing blockchain.db file will be replaced, are you sure?",
 					default: false
 				}
 			], function (result) {
@@ -353,12 +353,12 @@ program
 								var done = this.async();
 
 								if (value.length == 0) {
-									done("Secret must contain minimum 1 character");
+									done("Secret is too short, minimum is 1 character");
 									return;
 								}
 
 								if (value.length > 100) {
-									done("Secret max length is 100 characters");
+									done("Secret is too long, maximum is 100 characters");
 									return;
 								}
 
@@ -372,14 +372,14 @@ program
 							{
 								type: "input",
 								name: "dappId",
-								message: "Your dapp id (folder name of dapp)",
+								message: "Enter DApp id (folder name of dapp)",
 								required: true,
 								validate: function (value) {
 									var done = this.async();
 
 									var isId = /^[0-9]$/g;
 									if (!isId.test(value)) {
-										done("This is not dapp id");
+										done("Invalid DApp id");
 										return;
 									}
 
@@ -409,7 +409,7 @@ program
 									{
 										type: "input",
 										name: "publicKeys",
-										message: "Additional public keys of dapp forgers - hex array, use ',' for seperator",
+										message: "Enter public keys of dapp forgers - hex array, use ',' for separator",
 										default: account.keypair.publicKey,
 										validate: function (value) {
 											var done = this.async();
@@ -417,7 +417,7 @@ program
 											var publicKeys = value.split(',');
 
 											if (publicKeys.length == 0) {
-												done('DApp need minimum 1 public key');
+												done('DApp requires at least 1 public key');
 												return;
 											}
 
@@ -473,7 +473,7 @@ program
 				{
 					type: "password",
 					name: "secret",
-					message: "Your secret",
+					message: "Enter secret",
 					validate: function (value) {
 						return value.length > 0 && value.length < 100;
 					},
@@ -482,7 +482,7 @@ program
 				{
 					type: "input",
 					name: "amount",
-					message: "Amount",
+					message: "Enter amount",
 					validate: function (value) {
 						return !isNaN(parseInt(value));
 					},
@@ -497,7 +497,7 @@ program
 				{
 					type: "input",
 					name: "secondSecret",
-					message: "Second secret, if you have it",
+					message: "Enter secondary secret (if defined)",
 					validate: function (value) {
 						return value.length < 100;
 					},
@@ -539,7 +539,7 @@ program
 				{
 					type: "password",
 					name: "secret",
-					message: "Your secret",
+					message: "Enter secret",
 					validate: function (value) {
 						return value.length > 0 && value.length < 100;
 					},
@@ -557,7 +557,7 @@ program
 				{
 					type: "input",
 					name: "dappId",
-					message: "DApp Id",
+					message: "Enter DApp id",
 					validate: function (value) {
 						var isAddress = /^[0-9]$/g;
 						return isAddress.test(value);
@@ -596,8 +596,8 @@ program
 program
 	.command('contract')
 	.description('contract operations')
-	.option('-a, --add', "Add new contract")
-	.option('-d, --delete', "Delete contract")
+	.option('-a, --add', "add new contract")
+	.option('-d, --delete', "delete contract")
 	.action(function (options) {
 		var contractsPath = path.join('.', 'modules', 'contracts');
 		fs.exists(contractsPath, function (exist) {
@@ -632,7 +632,7 @@ program
 										return console.log(err);
 									} else {
 										console.log("New contract created: " + ("./contracts/" + filename));
-										console.log("Update list of contracts");
+										console.log("Updating contracts list");
 
 										fs.readFile(path.join('.', 'modules.full.json'), 'utf8', function (err, text) {
 											if (err) {
@@ -689,7 +689,7 @@ program
 
 									console.log("Contract removed");
 
-									console.log("Update list of contracts");
+									console.log("Updating contracts list");
 
 									fs.readFile(path.join('.', 'modules.full.json'), 'utf8', function (err, text) {
 										if (err) {
@@ -725,7 +725,7 @@ program
 
 				}
 			} else {
-				return console.log('./modules/contracts path not found, please, go to dapp folder');
+				return console.log('./modules/contracts path not found, please change directory to your dapp folder');
 			}
 		});
 	});
@@ -733,8 +733,8 @@ program
 program
 	.command('crypto')
 	.description("crypto operations")
-	.option('-p, --pubkey', "Generate public key by secret")
-	.option('-g, --generate', "Generate random accounts")
+	.option('-p, --pubkey', "generate public key from secret")
+	.option('-g, --generate', "generate random accounts")
 	.action(function (options) {
 		if (options.pubkey) {
 			inquirer.prompt([
@@ -746,12 +746,12 @@ program
 						var done = this.async();
 
 						if (value.length == 0) {
-							done("Secret must contain minimum 1 character");
+							done("Secret is too short, minimum is 1 character");
 							return;
 						}
 
 						if (value.length > 100) {
-							done("Secret max length is 100 characters");
+							done("Secret is too long, maximum is 100 characters");
 							return;
 						}
 
@@ -767,7 +767,7 @@ program
 				{
 					type: "input",
 					name: "amount",
-					message: "How many accounts generate",
+					message: "Enter number of accounts to generate",
 					validate: function (value) {
 						var num = parseInt(value);
 						return !isNaN(num);

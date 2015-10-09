@@ -29,7 +29,7 @@ program
 				{
 					type: "confirm",
 					name: "confirmed",
-					message: "This operation needs to remove the old blockchain.db file and create a new one, are you sure?",
+					message: "Existing blockchain.db file will be replaced, are you sure?",
 					default: false
 				}
 			], function (result) {
@@ -62,7 +62,7 @@ program
 							{
 								type: "confirm",
 								name: "confirmed",
-								message: "Update current genesis block? (or create a new one)"
+								message: "Update existing genesis block? (or create a new one)"
 							}
 						], function (result) {
 							var genesisBlock = null;
@@ -81,7 +81,7 @@ program
 								{
 									type: "input",
 									name: "name",
-									message: "Your DApp name",
+									message: "Enter DApp name",
 									required: true,
 									validate: function (value) {
 										var done = this.async();
@@ -102,7 +102,7 @@ program
 								{
 									type: "input",
 									name: "description",
-									message: "Description",
+									message: "Enter DApp description",
 									validate: function (value) {
 										var done = this.async();
 
@@ -172,7 +172,7 @@ program
 										{
 											type: "input",
 											name: "publicKeys",
-											message: "Additional public keys of dapp forgers - hex array, use ',' for seperator",
+											message: "Enter public keys of dapp forgers - hex array, use ',' for separator",
 											default: account.keypair.publicKey,
 											validate: function (value) {
 												var done = this.async();
@@ -339,7 +339,7 @@ program
 				{
 					type: "confirm",
 					name: "confirmed",
-					message: "This operation needs to remove the old blockchain.db file and create a new one, are you sure?",
+					message: "Existing blockchain.db file will be replaced, are you sure?",
 					default: false
 				}
 			], function (result) {
@@ -372,7 +372,7 @@ program
 							{
 								type: "input",
 								name: "dappId",
-								message: "Your dapp id (folder name of dapp)",
+								message: "Enter DApp id (folder name of dapp)",
 								required: true,
 								validate: function (value) {
 									var done = this.async();
@@ -409,7 +409,7 @@ program
 									{
 										type: "input",
 										name: "publicKeys",
-										message: "Additional public keys of dapp forgers - hex array, use ',' for seperator",
+										message: "Enter public keys of dapp forgers - hex array, use ',' for separator",
 										default: account.keypair.publicKey,
 										validate: function (value) {
 											var done = this.async();
@@ -473,7 +473,7 @@ program
 				{
 					type: "password",
 					name: "secret",
-					message: "Your secret",
+					message: "Enter secret",
 					validate: function (value) {
 						return value.length > 0 && value.length < 100;
 					},
@@ -482,7 +482,7 @@ program
 				{
 					type: "input",
 					name: "amount",
-					message: "Amount",
+					message: "Enter amount",
 					validate: function (value) {
 						return !isNaN(parseInt(value));
 					},
@@ -497,7 +497,7 @@ program
 				{
 					type: "input",
 					name: "secondSecret",
-					message: "Second secret, if you have it",
+					message: "Enter secondary secret (if defined)",
 					validate: function (value) {
 						return value.length < 100;
 					},
@@ -539,7 +539,7 @@ program
 				{
 					type: "password",
 					name: "secret",
-					message: "Your secret",
+					message: "Enter secret",
 					validate: function (value) {
 						return value.length > 0 && value.length < 100;
 					},
@@ -557,7 +557,7 @@ program
 				{
 					type: "input",
 					name: "dappId",
-					message: "DApp Id",
+					message: "Enter DApp id",
 					validate: function (value) {
 						var isAddress = /^[0-9]$/g;
 						return isAddress.test(value);
@@ -767,7 +767,7 @@ program
 				{
 					type: "input",
 					name: "amount",
-					message: "How many accounts generate",
+					message: "Enter number of accounts to generate",
 					validate: function (value) {
 						var num = parseInt(value);
 						return !isNaN(num);

@@ -131,7 +131,7 @@ program
 									}
 								}
 							], function (result) {
-								console.log("Generating unique genesis block especially for you...");
+								console.log("Generating unique genesis block...");
 
 								// create dapp and save to genesis block
 								var block, dapp, delegates;
@@ -205,7 +205,7 @@ program
 
 										var dappBlock = dappHelper.new(account, block, result.publicKeys.split(','));
 
-										console.log("Fetch Crypti DApp Toolkit");
+										console.log("Fetching Crypti DApp Toolkit");
 
 										var dappsPath = path.join('.', 'dapps');
 										fs.exists(dappsPath, function (exists) {
@@ -224,7 +224,7 @@ program
 													return console.log(err.toString());
 												}
 
-												console.log("Connect local repository with your remote repository");
+												console.log("Connecting local repository with remote repository");
 												gift.init(dappPath, function (err, repo) {
 													if (err) {
 														return console.log(err.toString());
@@ -260,7 +260,7 @@ program
 																if (err) {
 																	return console.log(err);
 																} else {
-																	console.log("Save genesis blocks");
+																	console.log("Saving genesis block");
 																	var genesisBlockJson = JSON.stringify(block, null, 4);
 
 																	try {
@@ -277,7 +277,7 @@ program
 																		return console.log(err);
 																	}
 
-																	console.log("Update config");
+																	console.log("Updating config");
 
 																	try {
 																		var config = JSON.parse(fs.readFileSync(path.join('.', 'config.json'), 'utf8'));
@@ -632,7 +632,7 @@ program
 										return console.log(err);
 									} else {
 										console.log("New contract created: " + ("./contracts/" + filename));
-										console.log("Update list of contracts");
+										console.log("Updating contracts list");
 
 										fs.readFile(path.join('.', 'modules.full.json'), 'utf8', function (err, text) {
 											if (err) {
@@ -689,7 +689,7 @@ program
 
 									console.log("Contract removed");
 
-									console.log("Update list of contracts");
+									console.log("Updating contracts list");
 
 									fs.readFile(path.join('.', 'modules.full.json'), 'utf8', function (err, text) {
 										if (err) {
@@ -725,7 +725,7 @@ program
 
 				}
 			} else {
-				return console.log('./modules/contracts path not found, please, go to dapp folder');
+				return console.log('./modules/contracts path not found, please change directory to your dapp folder');
 			}
 		});
 	});

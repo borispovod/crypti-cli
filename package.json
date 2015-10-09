@@ -1,7 +1,7 @@
 {
   "name": "crypti-cli",
   "preferGlobal": true,
-  "version": "1.0.9",
+  "version": "1.1.0",
   "description": "Crypti DApps Command Line Interface",
   "main": "index.js",
   "scripts": {
@@ -30,6 +30,10 @@
   },
   "bugs": {
     "url": "https://github.com/crypti/crypti-cli/issues"
+  },
+  "repository" : {
+    "type" : "git",
+    "url" : "https://github.com/npm/npm.git"
   },
   "homepage": "https://github.com/crypti/crypti-cli"
 }

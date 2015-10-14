@@ -373,18 +373,7 @@ program
 								type: "input",
 								name: "dappId",
 								message: "Enter DApp id (folder name of dapp)",
-								required: true,
-								validate: function (value) {
-									var done = this.async();
-
-									var isId = /^[0-9]$/g;
-									if (!isId.test(value)) {
-										done("Invalid DApp id");
-										return;
-									}
-
-									done(true);
-								}
+								required: true
 							},
 						], function (result) {
 							var dappId = result.dappId,

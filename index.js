@@ -62,7 +62,8 @@ program
 							{
 								type: "confirm",
 								name: "confirmed",
-								message: "Update existing genesis block? (or create a new one)"
+								message: "Update existing genesis block? (or create a new one)",
+								default: false
 							}
 						], function (result) {
 							var genesisBlock = null;
@@ -504,23 +505,33 @@ program
 					body.secondSecret = result.secondSecret;
 				}
 
-				request({
-					url: "http://localhost:7040/api/dapps/transaction",
-					method: "put",
-					json: true,
-					body: body
-				}, function (err, resp, body) {
-					console.log(err, body);
-					if (err) {
-						return console.log(err.toString());
+				inquirer.prompt([
+					{
+						type: "input",
+						name: "host",
+						message: "Host and port",
+						default: "localhost:7040",
+						required: true
 					}
+				], function (result) {
+					request({
+						url: "http://" + result.host + "/api/dapps/transaction",
+						method: "put",
+						json: true,
+						body: body
+					}, function (err, resp, body) {
+						console.log(err, body);
+						if (err) {
+							return console.log(err.toString());
+						}
 
-					if (body.success) {
-						console.log(body.transactionId);
-						return;
-					} else {
-						return console.log(body.error);
-					}
+						if (body.success) {
+							console.log(body.transactionId);
+							return;
+						} else {
+							return console.log(body.error);
+						}
+					});
 				});
 			});
 		} else if (options.withdrawal) {

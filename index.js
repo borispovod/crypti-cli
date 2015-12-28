@@ -6,12 +6,13 @@ var dappHelper = require('./helpers/dapp.js');
 var gift = require('gift');
 var fs = require('fs');
 var path = require('path');
+var async = require('async');
 var rmdir = require('rmdir');
 var cryptoLib = require('./lib/crypto.js');
 var npm = require('npm');
 var toolkit = "git@github.com:crypti/testdapp.git";
 
-program.version('0.0.1');
+program.version('0.0.2');
 
 program
 	.command("dapps")
@@ -22,313 +23,300 @@ program
 	.option("-w, --withdrawal", "Withdrawal funds from dapp")
 	.action(function (options) {
 		if (options.add) {
-			inquirer.prompt([
+			var questions = [
 				{
 					type: "confirm",
 					name: "confirmed",
 					message: "This operation need to remove old blockchain.db file and create new one, are you sure?",
 					default: false
-				}
-			], function (result) {
-				if (result.confirmed) {
-					inquirer.prompt([
-						{
-							type: "password",
-							name: "secret",
-							message: "Put secret of your testnet account",
-							validate: function (value) {
-								var done = this.async();
-
-								if (value.length == 0) {
-									done("Secret must contain minimum 1 character");
-									return;
-								}
-
-								if (value.length > 100) {
-									done("Secret max length is 100 characters");
-									return;
-								}
-
-								done(true);
-							}
+				},
+				{
+					type: "password",
+					name: "secret",
+					message: "Put secret of your testnet account",
+					validate: function (value) {
+						if (value.length == 0) {
+							return "Secret must contain minimum 1 character";
 						}
-					], function (result) {
-						var account = accountHelper.account(result.secret);
 
-						inquirer.prompt([
-							{
-								type: "confirm",
-								name: "confirmed",
-								message: "Update current genesis block? (or make new one)"
-							}
-						], function (result) {
+						if (value.length > 100) {
+							return "Secret max length is 100 characters";
+						}
+
+						return true;
+					},
+					when: function (answers) {
+						return answers.confirmed;
+					}
+				},
+				{
+					type: "confirm",
+					name: "update_bc",
+					message: "Update current genesis block? (or make new one)",
+					when: function (answers) {
+						return answers.confirmed;
+					}
+				},
+				{
+					type: "input",
+					name: "name",
+					message: "Your DApp name",
+					required: true,
+					validate: function (value) {
+						if (value.length == 0) {
+							return "DApp name must minimum contain one character";
+						}
+
+						if (value.length > 32) {
+							return "DApp name max length is 32 characters";
+						}
+						return true;
+					},
+					when: function (answers) {
+						return answers.confirmed;
+					}
+				},
+				{
+					type: "input",
+					name: "description",
+					message: "Description",
+					validate: function (value) {
+						if (value.length > 160) {
+							return "DApp description max length is 160 characters";
+						}
+						return true;
+					},
+					when: function (answers) {
+						return answers.confirmed;
+					}
+				},
+				{
+					type: "input",
+					name: "git",
+					message: "Github repository",
+					required: true,
+					validate: function (value) {
+						if (!(/^git\@github\.com\:.+\.git$/.test(value))) {
+							return "Incorrect github repository link";
+						}
+						return true;
+					},
+					when: function (answers) {
+						return answers.confirmed;
+					}
+				},
+				{
+					type: "confirm",
+					name: "autoexec",
+					message: "Add dapp to autolaunch",
+					when: function (answers) {
+						return answers.confirmed;
+					}
+				}
+			];
+
+			inquirer.prompt(questions, function (answers) {
+				if (answers.confirmed) {
+					async.auto({
+						account: function (cb) {
+							var account = accountHelper.account(answers.secret);
+							cb(null, account);
+						},
+						oldGenesis: function (cb) {
 							var genesisBlock = null;
-							var newGenesisBlock = !result.confirmed;
 
-							if (!newGenesisBlock) {
+							if (answers.update_bc) {
 								try {
 									var genesisBlock = JSON.parse(fs.readFileSync(path.join('.', 'genesisBlock.json'), 'utf8'));
 								} catch (e) {
-									console.log("Can't read genesisBlock.js: ", e.toString());
-									return;
+									return cb("Can't read genesisBlock.js: " + e.toString());
 								}
 							}
+							cb(null, genesisBlock);
+						},
+						newGenesis: ["account", "oldGenesis", function (cb, scope) {
+							console.log("Generating unique genesis block special for you...");
 
+							// create dapp and save to genesis block
+							if (!answers.update_bc) {
+								try {
+									var r = blockHelper.new(scope.account, {
+										name: answers.name,
+										description: answers.description,
+										git: answers.git,
+										type: 0,
+										category: 0
+									});
+								} catch (e) {
+									return cb(e.toString());
+								}
+
+								cb(null, r);
+							} else {
+								try {
+									var r = blockHelper.from(scope.oldGenesis, scope.account, {
+										name: answers.name,
+										description: answers.description,
+										git: answers.git,
+										type: 0,
+										category: 0
+									});
+								} catch (e) {
+									return cb(e.toString());
+								}
+
+								cb(null, r)
+							}
+						}],
+						publicKeys: ["account", "newGenesis", function (cb, scope) {
 							inquirer.prompt([
 								{
 									type: "input",
-									name: "name",
-									message: "Your DApp name",
-									required: true,
+									name: "publicKeys",
+									message: "Additional public keys of dapp forgers - hex array, use ',' for seperator",
+									default: scope.account.keypair.publicKey,
 									validate: function (value) {
-										var done = this.async();
+										var publicKeys = value.split(',');
 
-										if (value.length == 0) {
-											done("DApp name must minimum contain one character");
-											return;
+										if (publicKeys.length == 0) {
+											return 'DApp requires minimum 1 public key';
 										}
 
-										if (value.length > 32) {
-											done("DApp name max length is 32 characters");
-											return;
+										for (var i in publicKeys) {
+											try {
+												var b = new Buffer(publicKeys[i], 'hex');
+												if (b.length != 32) {
+													return 'Incorrect public key: ' + publicKeys[i];
+												}
+											} catch (e) {
+												return 'Incorrect hex for public key: ' + publicKeys[i];
+											}
 										}
 
-										return done(true)
-									}
-								},
-								{
-									type: "input",
-									name: "description",
-									message: "Description",
-									validate: function (value) {
-										var done = this.async();
-
-										if (value.length > 160) {
-											done("DApp description max length is 160 characters");
-											return;
-										}
-
-										return done(true);
-									}
-								},
-								{
-									type: "input",
-									name: "git",
-									message: "Github repository",
-									required: true,
-									validate: function (value) {
-										var done = this.async();
-
-										if (!(/^git\@github\.com\:.+\.git$/.test(value))) {
-											done("Incorrect github repository link");
-											return;
-										}
-
-										return done(true);
+										return true;
 									}
 								}
-							], function (result) {
-								console.log("Generating unique genesis block special for you...");
-
-								// create dapp and save to genesis block
-								var block, dapp, delegates;
-
-								if (newGenesisBlock) {
-									var r = blockHelper.new(account,
-										{
-											name: result.name,
-											description: result.description,
-											git: result.git,
-											type: 0,
-											category: 0
-										}
-									);
-
-									block = r.block;
-									dapp = r.dapp;
-									delegates = r.delegates;
-								} else {
-									try {
-										var r = blockHelper.from(genesisBlock, account,
-											{
-												name: result.name,
-												description: result.description,
-												git: result.git,
-												type: 0,
-												category: 0
-											}
-										);
-									} catch (e) {
-										return console.log(e);
-									}
-
-									block = r.block;
-									dapp = r.dapp;
-								}
-									inquirer.prompt([
-										{
-											type: "input",
-											name: "publicKeys",
-											message: "Additional public keys of dapp forgers - hex array, use ',' for seperator",
-											default: account.keypair.publicKey,
-											validate: function (value) {
-												var done = this.async();
-
-												var publicKeys = value.split(',');
-
-												if (publicKeys.length == 0) {
-													done('DApp need minimum 1 public key');
-													return;
-												}
-
-												for (var i in publicKeys) {
-													try {
-														var b = new Buffer(publicKeys[i], 'hex');
-														if (b.length != 32) {
-															done('Incorrect public key: ' + publicKeys[i]);
-															return;
-														}
-													} catch (e) {
-														done('Incorrect hex for public key: ' + publicKeys[i]);
-														return;
-													}
-												}
-
-												done(true);
-											}
-										}
-									], function (result) {
-										console.log("Creating DApp genesis block");
-
-										var dappBlock = dappHelper.new(account, block, result.publicKeys.split(','));
-
-										console.log("Fetch Crypti DApp Toolkit");
-
-										var dappsPath = path.join('.', 'dapps');
-										fs.exists(dappsPath, function (exists) {
-											if (!exists) {
-												fs.mkdirSync(dappsPath);
-											}
-
-										var dappPath = path.join(dappsPath, dapp.id);
-										gift.clone(toolkit, dappPath, function (err, repo) {
-											if (err) {
-												return console.log(err.toString());
-											}
-
-											rmdir(path.join(dappPath, ".git"), function (err) {
-												if (err) {
-													return console.log(err.toString());
-												}
-
-												console.log("Connect local repository with your remote repository");
-												gift.init(dappPath, function (err, repo) {
-													if (err) {
-														return console.log(err.toString());
-													}
-
-													repo.remote_add('origin', dapp.asset.dapp.git, function (err, repo) {
-														if (err) {
-															return console.log(err.toString());
-														}
-
-														var bcFile = path.join('.', 'blockchain.db');
-
-														var exists = fs.existsSync(bcFile);
-														if (exists) {
-															fs.unlinkSync(bcFile);
-														}
-
-														// load npm config
-														var packageJson = path.join(dappPath, "package.json");
-														var config = null;
-
-														try {
-															config = JSON.parse(fs.readFileSync(packageJson));
-														} catch (e) {
-															return setImmediate(cb, "Incorrect package.json file for " + dApp.transactionId + " DApp");
-														}
-
-														npm.load(config, function (err) {
-															npm.root = path.join(dappPath, "node_modules");
-															npm.prefix = dappPath;
-
-															npm.commands.install(function (err, data) {
-																if (err) {
-																	return console.log(err);
-																} else {
-																	console.log("Save genesis blocks");
-																	var genesisBlockJson = JSON.stringify(block, null, 4);
-
-																	try {
-																		fs.writeFileSync(path.join('.', 'genesisBlock.json'), genesisBlockJson, "utf8");
-																	} catch (e) {
-																		return console.log(err);
-																	}
-
-																	var dappGenesisBlockJson = JSON.stringify(dappBlock, null, 4);
-
-																	try {
-																		fs.writeFileSync(path.join(dappPath, 'genesis.json'), dappGenesisBlockJson, "utf8");
-																	} catch (e) {
-																		return console.log(err);
-																	}
-
-																	console.log("Update config");
-
-																	try {
-																		var config = JSON.parse(fs.readFileSync(path.join('.', 'config.json'), 'utf8'));
-																	} catch (e) {
-																		return console.log(e);
-																	}
-
-																	if (newGenesisBlock) {
-																		config.forging = config.forging || {};
-																		config.forging.secret = delegates.map(function (d) {
-																			return d.secret;
-																		});
-																	}
-
-																	inquirer.prompt([
-																		{
-																			type: "confirm",
-																			name: "confirmed",
-																			message: "Add dapp to autolaunch"
-																		}
-																	], function (result) {
-																		if (result.confirmed) {
-																			config.dapp = config.dapp || {};
-																			config.dapp.autoexec = config.dapp.autoexec || [];
-																			config.dapp.autoexec.push({
-																				params: [
-																					account.secret,
-																					"modules.full.json"
-																				],
-																				dappid: dapp.id
-																			})
-																		}
-
-																		fs.writeFile(path.join('.', 'config.json'), JSON.stringify(config, null, 2), function (err) {
-																			if (err) {
-																				console.log(err);
-																			} else {
-																				console.log("Done (DApp id is " + dapp.id + ")");
-																			}
-																		});
-																	});
-																}
-															});
-														});
-													});
-												});
-											});
-										});
-									});
-
-								});
+							], function (answers) {
+								cb(null, answers.publicKeys);
 							});
-						});
-					});
+						}],
+						create: ["publicKeys", function (cb, scope) {
+							console.log("Creating DApp genesis block");
+
+							var dappBlock = dappHelper.new(scope.account, scope.newGenesis.block, scope.publicKeys.split(','));
+
+							console.log("Fetch Crypti DApp Toolkit");
+
+							var dappsPath = path.join('.', 'dapps');
+							var dappPath = path.join(dappsPath, scope.newGenesis.dapp.id);
+
+							async.series([
+								function (cb) {
+									fs.exists(dappsPath, function (exists) {
+										if (!exists) {
+											fs.mkdirSync(dappsPath);
+										}
+
+										gift.clone(toolkit, dappPath, cb);
+									})
+								},
+								function (cb) {
+									rmdir(path.join(dappPath, ".git"), cb);
+								},
+								function (cb) {
+									console.log("Connect local repository with your remote repository");
+									gift.init(dappPath, function (err, repo) {
+										if (err) {
+											return cb(err.toString());
+										}
+
+										repo.remote_add('origin', scope.newGenesis.dapp.asset.dapp.git, cb);
+									})
+								},
+								function (cb) {
+									var bcFile = path.join('.', 'blockchain.db');
+
+									var exists = fs.existsSync(bcFile);
+									if (exists) {
+										fs.unlinkSync(bcFile);
+									}
+
+									// load npm config
+									var packageJson = path.join(dappPath, "package.json");
+									var config = null;
+
+									try {
+										config = JSON.parse(fs.readFileSync(packageJson));
+									} catch (e) {
+										return cb("Incorrect package.json file for " + scope.newGenesis.dapp.transactionId + " DApp");
+									}
+
+									npm.load(config, cb);
+								},
+								function (cb) {
+									npm.root = path.join(dappPath, "node_modules");
+									npm.prefix = dappPath;
+
+									npm.commands.install(cb);
+								},
+
+								function (cb) {
+									console.log("Save genesis blocks");
+									var genesisBlockJson = JSON.stringify(scope.newGenesis.block, null, 4);
+
+									try {
+										fs.writeFileSync(path.join('.', 'genesisBlock.json'), genesisBlockJson, "utf8");
+									} catch (e) {
+										return cb(e.toString());
+									}
+
+									var dappGenesisBlockJson = JSON.stringify(dappBlock, null, 4);
+
+									try {
+										fs.writeFileSync(path.join(dappPath, 'genesis.json'), dappGenesisBlockJson, "utf8");
+									} catch (e) {
+										return cb(e.toString());
+									}
+
+									console.log("Update config");
+
+									try {
+										var config = JSON.parse(fs.readFileSync(path.join('.', 'config.json'), 'utf8'));
+									} catch (e) {
+										return cb(e.toString());
+									}
+
+									if (!answers.update_bc) {
+										config.forging = config.forging || {};
+										config.forging.secret = scope.newGenesis.delegates.map(function (d) {
+											return d.secret;
+										});
+									}
+
+
+									if (answers.autoexec) {
+										config.dapp = config.dapp || {};
+										config.dapp.autoexec = config.dapp.autoexec || [];
+										config.dapp.autoexec.push({
+											params: [
+												scope.account.secret,
+												"modules.full.json"
+											],
+											dappid: scope.newGenesis.dapp.id
+										})
+									}
+
+									fs.writeFile(path.join('.', 'config.json'), JSON.stringify(config, null, 2), cb);
+								}
+							], cb);
+						}]
+					}, function (err, scope) {
+						if (err) {
+							console.log(err);
+						} else {
+							console.log("Done (DApp id is " + scope.newGenesis.dapp.id + ")");
+						}
+					})
 				}
 			});
 		} else if (options.change) {
